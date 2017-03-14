@@ -7,6 +7,9 @@ import java.util.List;
  */
 public class PotManagerImpl implements PotManager {
 
+    public PotManagerImpl() {
+    }
+
     @Override
     public void createPot(Pot pot) {
 

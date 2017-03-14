@@ -9,6 +9,8 @@ import static org.junit.Assert.*;
  * @author Jakub Bohos 422419
  */
 public class TreeManagerImplTest {
+
+
     @Before
     public void setUp() throws Exception {
 
