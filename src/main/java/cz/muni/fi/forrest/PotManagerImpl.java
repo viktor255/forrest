@@ -3,7 +3,7 @@ package cz.muni.fi.forrest;
 import java.util.List;
 
 /**
- * Created by vikto on 14.03.2017.
+ * @author Viktor Lehotsky on 14.03.2017.
  */
 public class PotManagerImpl implements PotManager {
 
