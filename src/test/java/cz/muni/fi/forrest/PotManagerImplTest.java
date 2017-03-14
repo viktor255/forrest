@@ -17,7 +17,7 @@ public class PotManagerImplTest {
     @Test
     public void createPot() throws Exception {
 
-     }
+    }
 
     @Test
     public void updatePot() throws Exception {
