@@ -6,6 +6,11 @@ import java.util.List;
  * @author Jakub Bohos 422419
  */
 public class TreeManagerImpl implements TreeManager {
+
+    public TreeManagerImpl(){
+
+    }
+
     @Override
     public void createTree(Tree tree) {
 

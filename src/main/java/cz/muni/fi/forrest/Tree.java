@@ -19,7 +19,7 @@ public class Tree {
         this.isProtected = isProtected;
     }
 
-    public long getTreeId() {
+    public Long getTreeId() {
         return treeId;
     }
 
@@ -47,7 +47,7 @@ public class Tree {
         return isProtected;
     }
 
-    public void setProtected(boolean aProtected) {
-        isProtected = aProtected;
+    public void setProtected(boolean isProtected) {
+        this.isProtected = isProtected;
     }
 }
