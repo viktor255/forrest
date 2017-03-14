@@ -12,6 +12,13 @@ public class Tree {
     public Tree() {
     }
 
+    public Tree(Long treeId, String name, String treeType, boolean isProtected) {
+        this.treeId = treeId;
+        this.name = name;
+        this.treeType = treeType;
+        this.isProtected = isProtected;
+    }
+
     public long getTreeId() {
         return treeId;
     }
