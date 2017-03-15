@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * @author Viktor Lehotsky on 14.03.2017.
@@ -28,23 +29,55 @@ public class PotManagerImplTest {
         manager = new PotManagerImpl();
     }
 
+
+    private PotBuilder sampleSmallPotBuilder() {
+        return new PotBuilder()
+                .id(null)
+                .column(1)
+                .row(2)
+                .capacity(1)
+                .note("Small Pot");
+    }
+
+    private PotBuilder sampleBigPotBuilder() {
+        return new PotBuilder()
+                .id(null)
+                .column(2)
+                .row(3)
+                .capacity(3)
+                .note("Big Pot");
+    }
+
+
+
     @Test
     public void createPot() throws Exception {
 
-        Pot pot = newPot(3, 11, 2, "Nice one pot");
+        Pot pot = sampleSmallPotBuilder().build();
+        manager.createPot(pot);
+
+        Long potId = pot.getId();
+        assertThat(potId).isNotNull();
+
+        assertThat(manager.findPotById(potId))
+                .isNotSameAs(pot)
+                .isEqualToComparingFieldByField(pot);
+
+      /*  Pot pot = newPot(3, 11, 2, "Nice one pot");
         manager.createPot(pot);
         Long potId = pot.getId();
         assertNotNull(potId);
         Pot result = manager.findPotById(potId);
         assertEquals(pot, result);
         assertNotSame(pot, result);
-        assertDeepEquals(pot, result);
+        assertDeepEquals(pot, result);*/
     }
 
-    @Test
+
+
+    @Test (expected = IllegalArgumentException.class)
     public void createPotWithNegativeCapacity() {
         Pot pot = newPot(1, 1, -1, "Negative capacity pot");
-        expectedException.expect(IllegalArgumentException.class);
         manager.createPot(pot);
     }
 
