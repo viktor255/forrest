@@ -25,7 +25,6 @@ public class PotManagerImplTest {
         manager = new PotManagerImpl();
     }
 
-
     private PotBuilder sampleSmallPotBuilder() {
         return new PotBuilder()
                 .id(null)
