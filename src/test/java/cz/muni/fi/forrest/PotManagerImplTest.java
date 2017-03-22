@@ -18,7 +18,6 @@ public class PotManagerImplTest {
     private PotManagerImpl manager;
 
     @Rule
-    // attribute annotated with @Rule annotation must be public
     public ExpectedException expectedException = ExpectedException.none();
 
     @Before
@@ -57,18 +56,7 @@ public class PotManagerImplTest {
         assertThat(manager.findPotById(potId))
                 .isNotSameAs(pot)
                 .isEqualToComparingFieldByField(pot);
-
-      /*  Pot pot = newPot(3, 11, 2, "Nice one pot");
-        manager.createPot(pot);
-        Long potId = pot.getId();
-        assertNotNull(potId);
-        Pot result = manager.findPotById(potId);
-        assertEquals(pot, result);
-        assertNotSame(pot, result);
-        assertDeepEquals(pot, result);*/
     }
-
-
 
     @Test
     public void createPotWithNegativeCapacity() {
@@ -177,48 +165,6 @@ public class PotManagerImplTest {
         manager.updatePot(pot);
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-   /* @Test
-    public void updatePot() throws Exception {
-
-        Pot pot = newPot(1, 3, 6, "Cool pot");
-        Pot anotherPot = newPot(2, 5, 3, "Another pot");
-        manager.createPot(pot);
-        manager.createPot(anotherPot);
-        Long potId = pot.getId();
-
-        pot = manager.findPotById(potId);
-        pot.setColumn(0);
-        pot.setRow(0);
-        pot.setCapacity(1);
-        pot.setNote("Zero pot");
-        manager.updatePot(pot);
-        assertEquals(0, pot.getColumn());
-        assertEquals(0, pot.getRow());
-        assertEquals(1, pot.getCapacity());
-        assertEquals("Zero pot", pot.getNote());
-
-        // Check if updates didn't affected other records
-        assertDeepEquals(anotherPot, manager.findPotById(anotherPot.getId()));
-
-    }*/
-
     @Test
     public void deletePot() throws Exception {
 
@@ -252,25 +198,7 @@ public class PotManagerImplTest {
                 .usingFieldByFieldElementComparator()
                 .containsOnly(g1,g2);
 
-       /* assertTrue(manager.findAllPots().isEmpty());
-
-        Pot g1 = newPot(23, 44, 5, "Pot 1");
-        Pot g2 = newPot(12, 4, 1, "Pot 2");
-
-        manager.createPot(g1);
-        manager.createPot(g2);
-
-        List<Pot> expected = Arrays.asList(g1, g2);
-        List<Pot> actual = manager.findAllPots();
-
-        Collections.sort(actual, POT_ID_COMPARATOR);
-        Collections.sort(expected, POT_ID_COMPARATOR);
-
-        assertEquals(expected, actual);
-        assertDeepEquals(expected, actual);*/
-
     }
-
     private static Pot newPot(int column, int row, int capacity, String note) {
         Pot pot = new Pot();
         pot.setColumn(column);
@@ -279,24 +207,4 @@ public class PotManagerImplTest {
         pot.setNote(note);
         return pot;
     }
-
-    /*private void assertDeepEquals(List<Pot> expectedList, List<Pot> actualList) {
-        for (int i = 0; i < expectedList.size(); i++) {
-            Pot expected = expectedList.get(i);
-            Pot actual = actualList.get(i);
-            assertDeepEquals(expected, actual);
-        }
-    }*/
-
-    /*private void assertDeepEquals(Pot expected, Pot actual) {
-        assertEquals(expected.getId(), actual.getId());
-        assertEquals(expected.getColumn(), actual.getColumn());
-        assertEquals(expected.getRow(), actual.getRow());
-        assertEquals(expected.getCapacity(), actual.getCapacity());
-        assertEquals(expected.getNote(), actual.getNote());
-    }
-
-    private static final Comparator<Pot> POT_ID_COMPARATOR =
-            Comparator.comparing(Pot::getId);*/
-
 }
