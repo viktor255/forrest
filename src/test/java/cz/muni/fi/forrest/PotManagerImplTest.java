@@ -198,7 +198,6 @@ public class PotManagerImplTest {
                 .containsOnly(g1,g2);
 
     }
-
     private static Pot newPot(int column, int row, int capacity, String note) {
         Pot pot = new Pot();
         pot.setColumn(column);
