@@ -1,16 +1,13 @@
 package cz.muni.fi.forrest;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import java.sql.SQLException;
+import javax.sql.DataSource;
+import org.apache.derby.jdbc.EmbeddedDataSource;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 /**
  * @author Jakub Bohos 422419
@@ -18,29 +15,266 @@ import static org.junit.Assert.*;
 public class TreeManagerImplTest {
 
     private TreeManagerImpl manager;
+//    private DataSource ds;
 
     @Rule
-    // attribute annotated with @Rule annotation must be public :-(
     public ExpectedException expectedException = ExpectedException.none();
 
+/*
+    private static DataSource prepareDataSource() throws SQLException {
+        EmbeddedDataSource ds = new EmbeddedDataSource();
+        ds.setDatabaseName("memory:gravemgr-test");
+        ds.setCreateDatabase("create");
+        return ds;
+    }
+*/
+/*
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws SQLException {
+        ds = prepareDataSource();
+        DBUtils.executeSqlScript(ds,TreeManager.class.getResource("createTables.sql"));
         manager = new TreeManagerImpl();
+        manager.setDataSource(ds);
     }
 
-    @Test
-    public void createTree() throws Exception {
+    @After
+    public void tearDown() throws SQLException {
+        DBUtils.executeSqlScript(ds,TreeManager.class.getResource("dropTables.sql"));
+    }
+*/
 
-        Tree tree = newTree("Jozef", "breza", false);
+    private TreeBuilder sampleWilhelmTreeBuilder() {
+        return new TreeBuilder()
+                .name("Wilhelm")
+                .treeType("buk")
+                .isProtected(false);
+    }
+
+    private TreeBuilder sampleBobTreeBuilder() {
+        return new TreeBuilder()
+                .name("Bob")
+                .treeType("tuja")
+                .isProtected(true);
+    }
+
+
+    /*
+    @Before
+    public void setUp() throws SQLException {
+        manager = new TreeManagerImpl();
+    }
+*/
+
+
+    @Test
+    public void createTree() {
+        Tree tree = sampleWilhelmTreeBuilder().build();
         manager.createTree(tree);
 
         Long treeId = tree.getTreeId();
-        assertNotNull(treeId);
-        Tree result = manager.getTree(treeId);
-        assertEquals(tree, result);
-        assertNotSame(tree, result);
-        assertDeepEquals(tree, result);
+        assertThat(treeId).isNotNull();
+
+        assertThat(manager.getTree(treeId))
+                .isNotSameAs(tree)
+                .isEqualToComparingFieldByField(tree);
     }
+
+
+    @Test
+    public void findAllTrees() {
+
+        assertThat(manager.findAllTrees()).isEmpty();
+
+        Tree wilhelm = sampleWilhelmTreeBuilder().build();
+        Tree bob = sampleBobTreeBuilder().build();
+
+        manager.createTree(wilhelm);
+        manager.createTree(bob);
+
+        assertThat(manager.findAllTrees())
+                .usingFieldByFieldElementComparator()
+                .containsOnly(wilhelm,bob);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createNullTree() {
+        manager.createTree(null);
+    }
+
+    @Test
+    public void createTreeWithExistingId() {
+        Tree tree = sampleWilhelmTreeBuilder()
+                .id(1L)
+                .build();
+        expectedException.expect(IllegalArgumentException.class);
+        manager.createTree(tree);
+    }
+
+    @Test
+    public void createTreeWithNullName() {
+        Tree tree = sampleWilhelmTreeBuilder()
+                .name(null)
+                .build();
+        assertThatThrownBy(() -> manager.createTree(tree))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void createTreeNullTreeType() {
+        Tree tree = sampleWilhelmTreeBuilder()
+                .treeType(null)
+                .build();
+        manager.createTree(tree);
+        assertThat(manager.getTree(tree.getTreeId()))
+                .isNotNull()
+                .isEqualToComparingFieldByField(tree);
+    }
+
+    @FunctionalInterface
+    private static interface Operation<T> {
+        void callOn(T subjectOfOperation);
+    }
+
+
+    private void testUpdateTree(Operation<Tree> updateOperation) {
+        Tree treeForUpdate = sampleWilhelmTreeBuilder().build();
+        Tree anotherTree = sampleBobTreeBuilder().build();
+        manager.createTree(treeForUpdate);
+        manager.createTree(anotherTree);
+
+        updateOperation.callOn(treeForUpdate);
+
+        manager.updateTree(treeForUpdate);
+        assertThat(manager.getTree(treeForUpdate.getTreeId()))
+                .isEqualToComparingFieldByField(treeForUpdate);
+        // Check if updates didn't affected other records
+        assertThat(manager.getTree(anotherTree.getTreeId()))
+                .isEqualToComparingFieldByField(anotherTree);
+    }
+
+    @Test
+    public void updateTreeName() {
+        testUpdateTree((tree) -> tree.setName("Jozef"));
+    }
+
+    @Test
+    public void updateTreeType() {
+        testUpdateTree((tree) -> tree.setTreeType("jelsa"));
+    }
+
+    @Test
+    public void updateTreeProtected() {
+        testUpdateTree((tree) -> tree.setProtected(true));
+    }
+
+
+    @Test(expected = IllegalArgumentException.class)
+    public void updateNullTree() {
+        manager.updateTree(null);
+    }
+
+    @Test
+    public void updateTreeWithNullId() {
+        Tree tree = sampleWilhelmTreeBuilder().id(null).build();
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updateTree(tree);
+    }
+
+    @Test
+    public void updateNonExistingTree() {
+        Tree tree = sampleWilhelmTreeBuilder().id(1L).build();
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updateTree(tree);
+    }
+
+    @Test
+    public void updateTreeWithNullName() {
+        Tree tree = sampleWilhelmTreeBuilder().build();
+        manager.createTree(tree);
+        tree.setName(null);
+
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updateTree(tree);
+    }
+
+    @Test
+    public void deleteTree() {
+
+        Tree wilhelm = sampleWilhelmTreeBuilder().build();
+        Tree bob = sampleBobTreeBuilder().build();
+        manager.createTree(wilhelm);
+        manager.createTree(bob);
+
+        assertThat(manager.getTree(wilhelm.getTreeId())).isNotNull();
+        assertThat(manager.getTree(bob.getTreeId())).isNotNull();
+
+        manager.deleteTree(wilhelm);
+
+        assertThat(manager.getTree(wilhelm.getTreeId())).isNull();
+        assertThat(manager.getTree(bob.getTreeId())).isNotNull();
+
+    }
+
+
+    @Test(expected = IllegalArgumentException.class)
+    public void deleteNullTree() {
+        manager.deleteTree(null);
+    }
+
+    @Test
+    public void deleteTreeWithNullId() {
+        Tree tree = sampleWilhelmTreeBuilder().id(null).build();
+        expectedException.expect(IllegalArgumentException.class);
+        manager.deleteTree(tree);
+    }
+
+    @Test
+    public void deleteNonExistingTree() {
+        Tree tree = sampleWilhelmTreeBuilder().id(1L).build();
+        expectedException.expect(IllegalArgumentException.class);
+        manager.deleteTree(tree);
+    }
+
+/*
+
+    private void testExpectedServiceFailureException(Operation<TreeManager> operation) throws SQLException {
+        SQLException sqlException = new SQLException();
+        DataSource failingDataSource = mock(DataSource.class);
+        when(failingDataSource.getConnection()).thenThrow(sqlException);
+        manager.setDataSource(failingDataSource);
+        assertThatThrownBy(() -> operation.callOn(manager))
+                .isInstanceOf(ServiceFailureException.class)
+                .hasCause(sqlException);
+    }
+
+    @Test
+    public void updateTreeWithSqlExceptionThrown() throws SQLException {
+        Tree tree = sampleWilhelmTreeBuilder().build();
+        manager.createTree(tree);
+        testExpectedServiceFailureException((treeManager) -> treeManager.updateTree(tree));
+    }
+
+    @Test
+    public void getTreeWithSqlExceptionThrown() throws SQLException {
+        Tree tree = sampleBobTreeBuilder().build();
+        manager.createTree(tree);
+        testExpectedServiceFailureException((treeManager) -> treeManager.getTree(tree.getTreeId()));
+    }
+
+    @Test
+    public void deleteTreeWithSqlExceptionThrown() throws SQLException {
+        Tree tree = sampleWilhelmTreeBuilder().build();
+        manager.createTree(tree);
+        testExpectedServiceFailureException((treeManager) -> treeManager.deleteTree(tree));
+    }
+
+    @Test
+    public void findAllTreesWithSqlExceptionThrown() throws SQLException {
+        testExpectedServiceFailureException((treeManager) -> treeManager.findAllTrees());
+    }
+*/
+/*
+
 
     @Test
     public void updateTree() throws Exception {
@@ -146,4 +380,6 @@ public class TreeManagerImplTest {
     }
 
     private static final Comparator<Tree> TREE_ID_COMPARATOR = Comparator.comparing(Tree::getTreeId);
+*/
+
 }
