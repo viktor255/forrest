@@ -20,6 +20,8 @@ public class TreeManagerImplTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+
+    
 /*
     private static DataSource prepareDataSource() throws SQLException {
         EmbeddedDataSource ds = new EmbeddedDataSource();
