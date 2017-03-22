@@ -4,11 +4,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import javax.xml.bind.ValidationException;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 import static org.junit.Assert.*;
 import static org.assertj.core.api.Assertions.*;
@@ -48,8 +45,6 @@ public class PotManagerImplTest {
                 .note("Big Pot");
     }
 
-
-
     @Test
     public void createPot() throws Exception {
 
@@ -75,14 +70,131 @@ public class PotManagerImplTest {
 
 
 
-    @Test (expected = IllegalArgumentException.class)
+    @Test
     public void createPotWithNegativeCapacity() {
-        Pot pot = newPot(1, 1, -1, "Negative capacity pot");
+        Pot pot = sampleSmallPotBuilder().column(-1).build();
+        assertThatThrownBy(() -> manager.createPot(pot)).isInstanceOf(ValidationException.class);
+    }
+
+    @FunctionalInterface
+    private static interface Operation<T> {
+        void callOn(T subjectOfOperation);
+    }
+
+    private void testUpdatePot(Operation<Pot> updateOperation) {
+        Pot sourcePot = sampleSmallPotBuilder().build();
+        Pot anotherPot = sampleBigPotBuilder().build();
+        manager.createPot(sourcePot);
+        manager.createPot(anotherPot);
+
+        updateOperation.callOn(sourcePot);
+
+        manager.updatePot(sourcePot);
+        assertThat(manager.findPotById(sourcePot.getId()))
+                .isEqualToComparingFieldByField(sourcePot);
+        // Check if updates didn't affected other records
+        assertThat(manager.findPotById(anotherPot.getId()))
+                .isEqualToComparingFieldByField(anotherPot);
+    }
+
+    @Test
+    public void updatePotRow() {
+        testUpdatePot((pot) -> pot.setRow(3));
+    }
+
+    @Test
+    public void updatePotColumn() {
+        testUpdatePot((pot) -> pot.setColumn(10));
+    }
+
+    @Test
+    public void updatePotCapacity() {
+        testUpdatePot((pot) -> pot.setCapacity(5));
+    }
+
+    @Test
+    public void updatePotNote() {
+        testUpdatePot((pot) -> pot.setNote("Not so nice pot"));
+    }
+
+    @Test
+    public void updatePotNoteToNull() {
+        testUpdatePot((pot) -> pot.setNote(null));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void updateNullPot() {
+        manager.updatePot(null);
+    }
+
+    @Test
+    public void updatePotWithNullId() {
+        Pot pot = sampleSmallPotBuilder().id(null).build();
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updatePot(pot);
+    }
+
+    @Test
+    public void updatePotWithNonExistingId() {
+        Pot pot = sampleSmallPotBuilder().id(1L).build();
+        expectedException.expect(IllegalArgumentException.class);
+        manager.updatePot(pot);
+    }
+
+    @Test
+    public void updatePotWithNegativeColumn() {
+        Pot pot = sampleSmallPotBuilder().build();
         manager.createPot(pot);
+        pot.setColumn(-1);
+        expectedException.expect(ValidationException.class);
+        manager.updatePot(pot);
+    }
+
+    @Test
+    public void updatePotWithNegativeRow() {
+        Pot pot = sampleSmallPotBuilder().build();
+        manager.createPot(pot);
+        pot.setRow(-1);
+        expectedException.expect(ValidationException.class);
+        manager.updatePot(pot);
+    }
+
+    @Test
+    public void updatePotWithZeroCapacity() {
+        Pot pot = sampleSmallPotBuilder().build();
+        manager.createPot(pot);
+        pot.setCapacity(0);
+        expectedException.expect(ValidationException.class);
+        manager.updatePot(pot);
+    }
+
+    @Test
+    public void updatePotWithNegativeCapacity() {
+        Pot pot = sampleSmallPotBuilder().build();
+        manager.createPot(pot);
+        pot.setCapacity(-1);
+        expectedException.expect(ValidationException.class);
+        manager.updatePot(pot);
     }
 
 
-    @Test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   /* @Test
     public void updatePot() throws Exception {
 
         Pot pot = newPot(1, 3, 6, "Cool pot");
@@ -105,7 +217,7 @@ public class PotManagerImplTest {
         // Check if updates didn't affected other records
         assertDeepEquals(anotherPot, manager.findPotById(anotherPot.getId()));
 
-    }
+    }*/
 
     @Test
     public void deletePot() throws Exception {
@@ -128,7 +240,19 @@ public class PotManagerImplTest {
     @Test
     public void findAllPots() throws Exception {
 
-        assertTrue(manager.findAllPots().isEmpty());
+        assertThat(manager.findAllPots()).isEmpty();
+
+        Pot g1 = sampleSmallPotBuilder().build();
+        Pot g2 = sampleBigPotBuilder().build();
+
+        manager.createPot(g1);
+        manager.createPot(g2);
+
+        assertThat(manager.findAllPots())
+                .usingFieldByFieldElementComparator()
+                .containsOnly(g1,g2);
+
+       /* assertTrue(manager.findAllPots().isEmpty());
 
         Pot g1 = newPot(23, 44, 5, "Pot 1");
         Pot g2 = newPot(12, 4, 1, "Pot 2");
@@ -143,7 +267,7 @@ public class PotManagerImplTest {
         Collections.sort(expected, POT_ID_COMPARATOR);
 
         assertEquals(expected, actual);
-        assertDeepEquals(expected, actual);
+        assertDeepEquals(expected, actual);*/
 
     }
 
@@ -156,15 +280,15 @@ public class PotManagerImplTest {
         return pot;
     }
 
-    private void assertDeepEquals(List<Pot> expectedList, List<Pot> actualList) {
+    /*private void assertDeepEquals(List<Pot> expectedList, List<Pot> actualList) {
         for (int i = 0; i < expectedList.size(); i++) {
             Pot expected = expectedList.get(i);
             Pot actual = actualList.get(i);
             assertDeepEquals(expected, actual);
         }
-    }
+    }*/
 
-    private void assertDeepEquals(Pot expected, Pot actual) {
+    /*private void assertDeepEquals(Pot expected, Pot actual) {
         assertEquals(expected.getId(), actual.getId());
         assertEquals(expected.getColumn(), actual.getColumn());
         assertEquals(expected.getRow(), actual.getRow());
@@ -173,6 +297,6 @@ public class PotManagerImplTest {
     }
 
     private static final Comparator<Pot> POT_ID_COMPARATOR =
-            Comparator.comparing(Pot::getId);
+            Comparator.comparing(Pot::getId);*/
 
 }
