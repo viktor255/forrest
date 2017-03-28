@@ -179,7 +179,6 @@ public class PotManagerImplTest {
 
         assertNull(manager.findPotById(g1.getId()));
         assertNotNull(manager.findPotById(g2.getId()));
-
     }
 
     @Test
