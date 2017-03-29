@@ -34,7 +34,7 @@ public class Tree {
     }
 
     public void setTreeId(Long id) {
-        this.treeId = treeId;
+        this.treeId = id;
     }
 
     public void setName(String name) {

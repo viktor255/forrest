@@ -1,6 +1,8 @@
 package cz.muni.fi.forrest;
 
 import cz.muni.fi.forrest.common.DBUtils;
+import cz.muni.fi.forrest.common.IllegalEntityException;
+import cz.muni.fi.forrest.common.ValidationException;
 import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.After;
 import org.junit.Before;
@@ -9,7 +11,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import javax.sql.DataSource;
-import javax.xml.bind.ValidationException;
+
 
 
 import java.sql.SQLException;
@@ -49,7 +51,7 @@ public class PotManagerImplTest {
     @After
     public void tearDown() throws SQLException {
         // Drop tables after each test
-        DBUtils.executeSqlScript(ds,PotManager.class.getResource("dropTables.sql"));
+        DBUtils.executeSqlScript(ds,PotManager.class.getClassLoader().getResource("dropTables.sql"));
     }
 
     private PotBuilder sampleSmallPotBuilder() {
@@ -144,14 +146,14 @@ public class PotManagerImplTest {
     @Test
     public void updatePotWithNullId() {
         Pot pot = sampleSmallPotBuilder().id(null).build();
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(IllegalEntityException.class);
         manager.updatePot(pot);
     }
 
     @Test
     public void updatePotWithNonExistingId() {
         Pot pot = sampleSmallPotBuilder().id(1L).build();
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(IllegalEntityException.class);
         manager.updatePot(pot);
     }
 

@@ -39,14 +39,14 @@ public class TreeManagerImplTest {
     @Before
     public void setUp() throws SQLException {
         ds = prepareDataSource();
-        DBUtils.executeSqlScript(ds,TreeManager.class.getResource("createTables.sql"));
+        DBUtils.executeSqlScript(ds,TreeManager.class.getClassLoader().getResource("createTables.sql"));
         manager = new TreeManagerImpl();
         manager.setDataSource(ds);
     }
 
     @After
     public void tearDown() throws SQLException {
-        DBUtils.executeSqlScript(ds,TreeManager.class.getResource("dropTables.sql"));
+        DBUtils.executeSqlScript(ds,TreeManager.class.getClassLoader().getResource("dropTables.sql"));
     }
 
 
@@ -103,7 +103,7 @@ public class TreeManagerImplTest {
                 .containsOnly(wilhelm,bob);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = ValidationException.class)
     public void createNullTree() {
         manager.createTree(null);
     }
@@ -123,18 +123,7 @@ public class TreeManagerImplTest {
                 .name(null)
                 .build();
         assertThatThrownBy(() -> manager.createTree(tree))
-                .isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    public void createTreeNullTreeType() {
-        Tree tree = sampleWilhelmTreeBuilder()
-                .treeType(null)
-                .build();
-        manager.createTree(tree);
-        assertThat(manager.getTree(tree.getTreeId()))
-                .isNotNull()
-                .isEqualToComparingFieldByField(tree);
+                .isInstanceOf(ValidationException.class);
     }
 
     @FunctionalInterface
@@ -175,7 +164,7 @@ public class TreeManagerImplTest {
     }
 
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = ValidationException.class)
     public void updateNullTree() {
         manager.updateTree(null);
     }

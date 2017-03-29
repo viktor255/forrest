@@ -3,6 +3,7 @@ package cz.muni.fi.forrest;
 import cz.muni.fi.forrest.common.DBUtils;
 import cz.muni.fi.forrest.common.IllegalEntityException;
 import cz.muni.fi.forrest.common.ServiceFailureException;
+import cz.muni.fi.forrest.common.ValidationException;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -39,7 +40,7 @@ public class TreeManagerImpl implements TreeManager {
         checkDataSource();
         validate(tree);
         if (tree.getTreeId() != null) {
-            throw new IllegalArgumentException("tree id is already set");
+            throw new IllegalEntityException("tree id is already set");
         }
         Connection conn = null;
         PreparedStatement st = null;
@@ -49,7 +50,7 @@ public class TreeManagerImpl implements TreeManager {
             // method DBUtils.closeQuietly(...)
             conn.setAutoCommit(false);
             st = conn.prepareStatement(
-                    "INSERT INTO Body (name,treeType,isProtected) VALUES (?,?,?)",
+                    "INSERT INTO Tree (name,treeType,isProtected) VALUES (?,?,?)",
                     Statement.RETURN_GENERATED_KEYS);
             st.setString(1, tree.getName());
             st.setString(2, tree.getTreeType());
@@ -61,7 +62,7 @@ public class TreeManagerImpl implements TreeManager {
             tree.setTreeId(id);
             conn.commit();
         } catch (SQLException ex) {
-            String msg = "Error when inserting grave into db";
+            String msg = "Error when inserting pot into db";
             logger.log(Level.SEVERE, msg, ex);
             throw new ServiceFailureException(msg, ex);
         } finally {
@@ -84,7 +85,7 @@ public class TreeManagerImpl implements TreeManager {
         try {
             conn = dataSource.getConnection();
             st = conn.prepareStatement(
-                    "SELECT id, name, treeType, isProtected FROM Body WHERE id = ?");
+                    "SELECT id, name, treeType, isProtected FROM Tree WHERE id = ?");
             st.setLong(1, id);
             return executeQueryForSingleTree(st);
         } catch (SQLException ex) {
@@ -112,17 +113,17 @@ public class TreeManagerImpl implements TreeManager {
             // method DBUtils.closeQuietly(...)
             conn.setAutoCommit(false);
             st = conn.prepareStatement(
-                    "UPDATE Tree SET name = ?, treeType = ?, isProtected ? WHERE id = ?");
+                    "UPDATE Tree SET name = ?, treeType = ?, isProtected = ? WHERE id = ?");
             st.setString(1, tree.getName());
             st.setString(2, tree.getTreeType());
-            st.setInt(5, tree.isProtected()?1:0);
-            st.setLong(6, tree.getTreeId());
+            st.setInt(3, tree.isProtected()?1:0);
+            st.setLong(4, tree.getTreeId());
 
             int count = st.executeUpdate();
             DBUtils.checkUpdatesCount(count, tree, false);
             conn.commit();
         } catch (SQLException ex) {
-            String msg = "Error when updating body in the db";
+            String msg = "Error when updating tree in the db";
             logger.log(Level.SEVERE, msg, ex);
             throw new ServiceFailureException(msg, ex);
         } finally {
@@ -227,13 +228,13 @@ public class TreeManagerImpl implements TreeManager {
 
     private void validate(Tree tree) {
         if (tree == null) {
-            throw new IllegalArgumentException("tree is null");
+            throw new ValidationException("tree is null");
         }
         if (tree.getName() == null) {
-            throw new IllegalArgumentException("name is null");
+            throw new ValidationException("name is null");
         }
         if (tree.getTreeType() == null) {
-            throw new IllegalArgumentException("treeType is null");
+            throw new ValidationException("treeType is null");
         }
     }
 
