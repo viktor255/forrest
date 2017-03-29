@@ -17,7 +17,7 @@ public class Pot {
         return potId;
     }
 
-    public void setId(Long potIdd) {
+    public void setId(Long potId) {
         this.potId = potId;
     }
 

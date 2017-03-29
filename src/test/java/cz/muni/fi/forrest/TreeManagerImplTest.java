@@ -2,6 +2,11 @@ package cz.muni.fi.forrest;
 
 import java.sql.SQLException;
 import javax.sql.DataSource;
+
+import cz.muni.fi.forrest.common.DBUtils;
+import cz.muni.fi.forrest.common.IllegalEntityException;
+import cz.muni.fi.forrest.common.ServiceFailureException;
+import cz.muni.fi.forrest.common.ValidationException;
 import org.apache.derby.jdbc.EmbeddedDataSource;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
@@ -15,22 +20,22 @@ import static org.mockito.Mockito.*;
 public class TreeManagerImplTest {
 
     private TreeManagerImpl manager;
-//    private DataSource ds;
+    private DataSource ds;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
 
-    
-/*
+
+
     private static DataSource prepareDataSource() throws SQLException {
         EmbeddedDataSource ds = new EmbeddedDataSource();
-        ds.setDatabaseName("memory:gravemgr-test");
+        ds.setDatabaseName("memory:treeManager-test");
         ds.setCreateDatabase("create");
         return ds;
     }
-*/
-/*
+
+
     @Before
     public void setUp() throws SQLException {
         ds = prepareDataSource();
@@ -43,7 +48,7 @@ public class TreeManagerImplTest {
     public void tearDown() throws SQLException {
         DBUtils.executeSqlScript(ds,TreeManager.class.getResource("dropTables.sql"));
     }
-*/
+
 
     private TreeBuilder sampleWilhelmTreeBuilder() {
         return new TreeBuilder()
@@ -108,7 +113,7 @@ public class TreeManagerImplTest {
         Tree tree = sampleWilhelmTreeBuilder()
                 .id(1L)
                 .build();
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(IllegalEntityException.class);
         manager.createTree(tree);
     }
 
@@ -178,14 +183,14 @@ public class TreeManagerImplTest {
     @Test
     public void updateTreeWithNullId() {
         Tree tree = sampleWilhelmTreeBuilder().id(null).build();
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(IllegalEntityException.class);
         manager.updateTree(tree);
     }
 
     @Test
     public void updateNonExistingTree() {
         Tree tree = sampleWilhelmTreeBuilder().id(1L).build();
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(IllegalEntityException.class);
         manager.updateTree(tree);
     }
 
@@ -195,7 +200,7 @@ public class TreeManagerImplTest {
         manager.createTree(tree);
         tree.setName(null);
 
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(ValidationException.class);
         manager.updateTree(tree);
     }
 
@@ -226,18 +231,18 @@ public class TreeManagerImplTest {
     @Test
     public void deleteTreeWithNullId() {
         Tree tree = sampleWilhelmTreeBuilder().id(null).build();
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(IllegalEntityException.class);
         manager.deleteTree(tree);
     }
 
     @Test
     public void deleteNonExistingTree() {
         Tree tree = sampleWilhelmTreeBuilder().id(1L).build();
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(IllegalEntityException.class);
         manager.deleteTree(tree);
     }
 
-/*
+
 
     private void testExpectedServiceFailureException(Operation<TreeManager> operation) throws SQLException {
         SQLException sqlException = new SQLException();
@@ -274,9 +279,8 @@ public class TreeManagerImplTest {
     public void findAllTreesWithSqlExceptionThrown() throws SQLException {
         testExpectedServiceFailureException((treeManager) -> treeManager.findAllTrees());
     }
-*/
-/*
 
+/*
 
     @Test
     public void updateTree() throws Exception {
