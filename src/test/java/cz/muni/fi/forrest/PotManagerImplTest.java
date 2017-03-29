@@ -1,11 +1,18 @@
 package cz.muni.fi.forrest;
 
+import cz.muni.fi.forrest.common.DBUtils;
+import org.apache.derby.jdbc.EmbeddedDataSource;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import javax.sql.DataSource;
 import javax.xml.bind.ValidationException;
 
+
+import java.sql.SQLException;
 
 import static org.junit.Assert.*;
 import static org.assertj.core.api.Assertions.*;
@@ -16,13 +23,33 @@ import static org.assertj.core.api.Assertions.*;
 public class PotManagerImplTest {
 
     private PotManagerImpl manager;
+    private DataSource ds;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+    private static DataSource prepareDataSource() throws SQLException {
+        EmbeddedDataSource ds = new EmbeddedDataSource();
+        // we will use in memory database
+       // ds.setConnectionAttributes("create=true");
+        ds.setDatabaseName("memory:potmgr-test");
+        // database is created automatically if it does not exist yet
+        ds.setCreateDatabase("create");
+        return ds;
+    }
+
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws SQLException {
+        ds = prepareDataSource();
+        DBUtils.executeSqlScript(ds, PotManager.class.getClassLoader().getResource("createTables.sql"));
+
         manager = new PotManagerImpl();
+        manager.setDataSource(ds);
+    }
+    @After
+    public void tearDown() throws SQLException {
+        // Drop tables after each test
+        DBUtils.executeSqlScript(ds,PotManager.class.getResource("dropTables.sql"));
     }
 
     private PotBuilder sampleSmallPotBuilder() {

@@ -14,8 +14,8 @@ import java.util.logging.Logger;
  */
 public class PotManagerImpl implements PotManager {
 
-    public PotManagerImpl() {
-    }
+    /*public PotManagerImpl() {
+    }*/
 
     private static final Logger logger = Logger.getLogger(
             PotManagerImpl.class.getName());
@@ -75,10 +75,72 @@ public class PotManagerImpl implements PotManager {
     @Override
     public void updatePot(Pot pot) {
 
+        checkDataSource();
+        validate(pot);
+        if (pot.getId() == null) {
+            throw new IllegalEntityException("pot id is null");
+        }
+        Connection conn = null;
+        PreparedStatement st = null;
+        try {
+            conn = dataSource.getConnection();
+            // Temporary turn autocommit mode off. It is turned back on in
+            // method DBUtils.closeQuietly(...)
+            conn.setAutoCommit(false);
+            st = conn.prepareStatement(
+                    "UPDATE Pot SET row = ?, col = ?, capacity = ?, note = ? WHERE id = ?");
+            st.setInt(1, pot.getRow());
+            st.setInt(2, pot.getColumn());
+            st.setInt(3, pot.getCapacity());
+            st.setString(4, pot.getNote());
+            st.setLong(5, pot.getId());
+
+            int count = st.executeUpdate();
+            DBUtils.checkUpdatesCount(count, pot, false);
+            conn.commit();
+        } catch (SQLException ex) {
+            String msg = "Error when updating pot in the db";
+            logger.log(Level.SEVERE, msg, ex);
+            throw new ServiceFailureException(msg, ex);
+        } finally {
+            DBUtils.doRollbackQuietly(conn);
+            DBUtils.closeQuietly(conn, st);
+        }
+
     }
 
     @Override
     public void deletePot(Pot pot) {
+
+        checkDataSource();
+        if (pot == null) {
+            throw new IllegalArgumentException("pot is null");
+        }
+        if (pot.getId() == null) {
+            throw new IllegalEntityException("pot id is null");
+        }
+        Connection conn = null;
+        PreparedStatement st = null;
+        try {
+            conn = dataSource.getConnection();
+            // Temporary turn autocommit mode off. It is turned back on in
+            // method DBUtils.closeQuietly(...)
+            conn.setAutoCommit(false);
+            st = conn.prepareStatement(
+                    "DELETE FROM Pot WHERE id = ?");
+            st.setLong(1, pot.getId());
+
+            int count = st.executeUpdate();
+            DBUtils.checkUpdatesCount(count, pot, false);
+            conn.commit();
+        } catch (SQLException ex) {
+            String msg = "Error when deleting pot from the db";
+            logger.log(Level.SEVERE, msg, ex);
+            throw new ServiceFailureException(msg, ex);
+        } finally {
+            DBUtils.doRollbackQuietly(conn);
+            DBUtils.closeQuietly(conn, st);
+        }
 
     }
 
@@ -104,7 +166,28 @@ public class PotManagerImpl implements PotManager {
 
     @Override
     public Pot findPotById(Long id) {
-        return null;
+        checkDataSource();
+
+        if (id == null) {
+            throw new IllegalArgumentException("id is null");
+        }
+
+        Connection conn = null;
+        PreparedStatement st = null;
+        try {
+            conn = dataSource.getConnection();
+            st = conn.prepareStatement(
+                    "SELECT id, col, row, capacity, note FROM Pot WHERE id = ?");
+            st.setLong(1, id);
+            return executeQueryForSinglePot(st);
+        } catch (SQLException ex) {
+            String msg = "Error when getting pot with id = " + id + " from DB";
+            logger.log(Level.SEVERE, msg, ex);
+            throw new ServiceFailureException(msg, ex);
+        } finally {
+            DBUtils.closeQuietly(conn, st);
+        }
+
     }
 
 

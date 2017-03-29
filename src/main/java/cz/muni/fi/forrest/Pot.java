@@ -10,9 +10,6 @@ public class Pot {
     private int capacity;
     private String note;
 
-    public Pot() {
-    }
-
     public Long getId() {
         return potId;
     }
