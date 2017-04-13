@@ -1,9 +1,4 @@
-# Created by .ignore support plugin (hsz.mobi)
 .idea/
-.settings
-.project
-test-output
-.classpath
+*/target/
 *.iml
-*~
-target
+*.log
